@@ -1,0 +1,27 @@
+{
+    "name": "1026jota/usa-terrorist-list",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "1026jota",
+            "email": "1026jota@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {"Jota\\DeudoresContaduria\\": "src/"}
+    },
+    "extra": {
+        "laravel":{
+            "providers": [
+                "Jota\\DeudoresContaduria\\Providers\\DeudoresContaduriaProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7",
+        "nesk/puphpeteer": "^2.0"
+    }
+}
+
