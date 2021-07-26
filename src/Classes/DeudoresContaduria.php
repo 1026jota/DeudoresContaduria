@@ -53,27 +53,32 @@ class DeudoresContaduria
         $page->waitFor(500);
 
         $page->type('.gwt-TextBox', $cedula);
-
         $page->click('.gwt-Button');
         $page->waitFor(500);
+
 
         $page->evaluate(JsFunction::createWithBody("
             return document.getElementsByClassName('gwt-Button')[1].click()
         "));
         $page->waitFor(500);
 
-        $page->evaluate(JsFunction::createWithBody("
-            return document.getElementsByClassName('gwt-ListBox')[0].value = 3
-        "));
+        if ((int)$cedula === (int)config('contaduria.user')) {
+            $page->evaluate(JsFunction::createWithBody("
+                return document.getElementsByClassName('gwt-ListBox')[0].value = 1
+            "));
+        } else {
+            $page->evaluate(JsFunction::createWithBody("
+                return document.getElementsByClassName('gwt-ListBox')[0].value = 3
+            "));
+        }
+
         $page->click('.gwt-Button');
 
         $page->waitForSelector('.certificado-content');
-        $page->screenshot(['path' => 'ho.png']);
 
         $html_response = $page->evaluate(JsFunction::createWithBody("
             return document.getElementsByClassName('certificado-content')[0].innerHTML
         "));
-
         $this->setResult($html_response, $cedula);
     }
 
@@ -90,12 +95,12 @@ class DeudoresContaduria
         if ($this->isDeudor($response)) {
             $this->result['is_registered'] = false;
             $this->result['result'] = [
-                'response' => 'El documento de identificación número ' . $cedula . ' NO está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
+                'response' => 'El documento de identificación número ' . $cedula . ' SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
             ];
         } else {
             $this->result['is_registered'] = true;
             $this->result['result'] = [
-                'response' => 'El documento de identificación número ' . $cedula . ' SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
+                'response' => 'El documento de identificación número ' . $cedula . ' NO está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
             ];
         }
     }

@@ -1,9 +1,0 @@
-{
-    "pv_po_id":73864880,
-    "po_id":"6",
-    "status":"approved",
-    "amount":"2000",
-    "iso_currency":"COP",
-    "pv_checksum":"c8f5263efbebdd4d7e333fa207e8a2b8ab2a55e972c352c214c794667f8d18c0",
-    "pv_payment":"Baloto"
-}
