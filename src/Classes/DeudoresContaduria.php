@@ -79,6 +79,7 @@ class DeudoresContaduria
         $html_response = $page->evaluate(JsFunction::createWithBody("
             return document.getElementsByClassName('certificado-content')[0].innerHTML
         "));
+        $browser->close();
         $this->setResult($html_response, $cedula);
     }
 
