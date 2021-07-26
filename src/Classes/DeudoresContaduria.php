@@ -93,12 +93,12 @@ class DeudoresContaduria
     private function setResult(string $response, string $cedula): void
     {
         if ($this->isDeudor($response)) {
-            $this->result['is_registered'] = false;
+            $this->result['is_registered'] = true;
             $this->result['result'] = [
                 'response' => 'El documento de identificación número ' . $cedula . ' SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
             ];
         } else {
-            $this->result['is_registered'] = true;
+            $this->result['is_registered'] = false;
             $this->result['result'] = [
                 'response' => 'El documento de identificación número ' . $cedula . ' NO está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
             ];
