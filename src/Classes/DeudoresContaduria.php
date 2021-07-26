@@ -50,17 +50,17 @@ class DeudoresContaduria
         $page->type('.gwt-TextBox', config('contaduria.user'));
         $page->type('.gwt-PasswordTextBox', config('contaduria.password'));
         $page->click('.gwt-Button');
-        $page->waitFor(500);
+        $page->waitFor(1000);
 
         $page->type('.gwt-TextBox', $cedula);
         $page->click('.gwt-Button');
-        $page->waitFor(500);
+        $page->waitFor(1000);
 
 
         $page->evaluate(JsFunction::createWithBody("
             return document.getElementsByClassName('gwt-Button')[1].click()
         "));
-        $page->waitFor(500);
+        $page->waitFor(1000);
 
         if ((int)$cedula === (int)config('contaduria.user')) {
             $page->evaluate(JsFunction::createWithBody("
