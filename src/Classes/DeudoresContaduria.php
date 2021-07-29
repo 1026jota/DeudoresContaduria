@@ -23,7 +23,7 @@ class DeudoresContaduria
     public function __construct()
     {
         $this->puppeteer = new Puppeteer([
-            'executable_path' => '/home/developer/.nvm/versions/node/v12.16.3/bin/node',
+            'executable_path' => config('contaduria.node'),
         ]);
     }
 
