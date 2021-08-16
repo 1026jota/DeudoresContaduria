@@ -36,7 +36,14 @@ class DeudoresContaduria
      */
     public function searchByCedula(string $cedula): void
     {
-        $browser = $this->puppeteer->launch(['headless' => true]);
+        $browser = $this->puppeteer->launch([
+            'headless' => true,
+            'args' => [
+                '--disable-gpu',
+                '--disable-setuid-sandbox',
+                '--no-sandbox',
+            ]
+        ]);
         $page = $browser->newPage();
         $page->goto('https://eris.contaduria.gov.co/BDME/');
 
