@@ -4,7 +4,8 @@ namespace Jota\DeudoresContaduria\Classes;
 
 use Nesk\Puphpeteer\Puppeteer;
 use Nesk\Rialto\Data\JsFunction;
-
+use Nesk\Rialto\Exceptions\Node\FatalException;
+use Nesk\Rialto\Exceptions\Node;
 class DeudoresContaduria
 {
     /**
@@ -25,6 +26,7 @@ class DeudoresContaduria
         $this->puppeteer = new Puppeteer([
             'executable_path' => config('contaduria.node'),
         ]);
+        $this->time = 3;
     }
 
     /**
@@ -34,60 +36,72 @@ class DeudoresContaduria
      * @param string $numero_cedula : identificacion a buscar
      * @return void
      */
-    public function searchByCedula(string $cedula): void
+    public function searchByCedula(string $cedula, $time = 3): void
     {
-        $browser = $this->puppeteer->launch([
-            'headless' => true,
-            'args' => [
-                '--disable-gpu',
-                '--disable-setuid-sandbox',
-                '--no-sandbox',
-            ]
-        ]);
-        $page = $browser->newPage();
-        $page->goto('https://eris.contaduria.gov.co/BDME/');
+        try {
 
-        $page->waitForSelector('.gwt-Anchor');
+            $browser = $this->puppeteer->launch([
+                'headless' => true,
 
-        $page->evaluate(JsFunction::createWithBody("
-            return document.getElementsByClassName('gwt-Anchor')[0].click()
-        "));
-        $page->waitFor(500);
+                'args' => [
+                    '--disable-gpu',
+                    '--disable-setuid-sandbox',
+                    '--no-sandbox',
+                ]
+            ]);
+            $page = $browser->newPage();
+            $page->setViewport([
+                'width' => 1080, 
+                'height' => 720,
+            ]);
+            $page->goto('https://eris.contaduria.gov.co/BDME/');
 
-        $page->type('.gwt-TextBox', config('contaduria.user'));
-        $page->type('.gwt-PasswordTextBox', config('contaduria.password'));
-        $page->click('.gwt-Button');
-        $page->waitFor(1000);
-
-        $page->type('.gwt-TextBox', $cedula);
-        $page->click('.gwt-Button');
-        $page->waitFor(1000);
-
-
-        $page->evaluate(JsFunction::createWithBody("
-            return document.getElementsByClassName('gwt-Button')[1].click()
-        "));
-        $page->waitFor(1000);
-
-        if ((int)$cedula === (int)config('contaduria.user')) {
+            $page->waitForSelector('.gwt-Anchor');
             $page->evaluate(JsFunction::createWithBody("
-                return document.getElementsByClassName('gwt-ListBox')[0].value = 1
+                return document.getElementsByClassName('gwt-Anchor')[0].click()
             "));
-        } else {
+            $page->waitFor(500);
+
+            $page->type('.gwt-TextBox', config('contaduria.user'));
+            $page->type('.gwt-PasswordTextBox', config('contaduria.password'));
+            $page->click('.gwt-Button');
+            $page->waitFor(1000);
+
+            $page->type('.gwt-TextBox', $cedula);
+            $page->click('.gwt-Button');
+            $page->waitFor(1000);
+
+
             $page->evaluate(JsFunction::createWithBody("
-                return document.getElementsByClassName('gwt-ListBox')[0].value = 3
+                return document.getElementsByClassName('gwt-Button')[1].click()
             "));
+            $page->waitFor(2000);
+
+            if ((int)$cedula === (int)config('contaduria.user')) {
+                $page->evaluate(JsFunction::createWithBody("
+                    return document.getElementsByClassName('gwt-ListBox')[0].value = 1
+                "));
+            } else {
+                $page->evaluate(JsFunction::createWithBody("
+                    return document.getElementsByClassName('gwt-ListBox')[0].value = 3
+                "));
+            }
+            $page->screenshot(['path' => '/var/www/html/kredicity-nuevo/example.png']);
+            $page->click('.gwt-Button');
+
+            $page->waitFor($time*1000);
+
+            $page->screenshot(['path' => '/var/www/html/kredicity-nuevo/example.png']);
+                $html_response = $page->tryCatch->evaluate(JsFunction::createWithBody("
+                    return document.getElementsByClassName('certificado-content')[0].innerHTML
+                "));
+                $this->setResult($html_response, $cedula);
+                $browser->close();
+        }catch (Node\Exception $exception) {
+            $browser->close();
+            $this->time += 1;
+            $this->searchByCedula($cedula, $this->time);
         }
-
-        $page->click('.gwt-Button');
-
-        $page->waitForSelector('.certificado-content');
-
-        $html_response = $page->evaluate(JsFunction::createWithBody("
-            return document.getElementsByClassName('certificado-content')[0].innerHTML
-        "));
-        $browser->close();
-        $this->setResult($html_response, $cedula);
     }
 
     /**
