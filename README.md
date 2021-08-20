@@ -1,4 +1,4 @@
-## ANTECEDENTES PROCURADURIA
+## DEUDORES CONTADURIA
 
 _Paquete composer para Laravel que resuelve si una persona aparece como deudora en la base de datos de la contaduria_
 
@@ -18,7 +18,7 @@ npm install @nesk/puphpeteer
 _después para publicar el archivo de configuración ejecuta siguiente comando:_
 
 ```
-php artisan vendor:publish --provider='Jota\AntecedentesProcuraduria\Providers\DeudoresContaduriaProviders'
+php artisan vendor:publish --provider='Jota\DeudoresContaduria\Providers\DeudoresContaduriaProviders'
 ```
 
 _en el archivo config/contaduria.php se deben llenar los campos:_
@@ -39,7 +39,7 @@ _en el archivo config/contaduria.php se deben llenar los campos:_
     $cedula = 12345678
     $contaduria = new DeudoresContaduria();
     $contaduria->searchByCedula($cedula);
-    $is_guilty =  $contaduria->getResult();
+    return $contaduria->getResult();
 
 ```
 ## Ejemplo resultado
@@ -49,7 +49,7 @@ cuando la cédula no está reportada
 [
   "is_registered" => false
   "result" => array:1 [
-    "response" => "El documento de identificación número 312312321 NO está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004."
+    "response" => "El documento de identificación número XXXXXXXXX NO está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004."
   ]
 ]
 
@@ -57,7 +57,7 @@ cuando la cédula está arroja resultado
 [
   "is_registered" => true
   "result" => array:1 [
-    "response" => "El documento de identificación número 2147483647 SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004."
+    "response" => "El documento de identificación número XXXXXXXXX SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004."
   ]
 ]
 
