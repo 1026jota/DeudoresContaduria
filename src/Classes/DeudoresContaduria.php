@@ -91,12 +91,11 @@ class DeudoresContaduria
 
             $page->waitFor($time*1000);
 
-            $page->screenshot(['path' => '/var/www/html/kredicity-nuevo/example.png']);
-                $html_response = $page->tryCatch->evaluate(JsFunction::createWithBody("
-                    return document.getElementsByClassName('certificado-content')[0].innerHTML
-                "));
-                $this->setResult($html_response, $cedula);
-                $browser->close();
+            $html_response = $page->tryCatch->evaluate(JsFunction::createWithBody("
+                return document.getElementsByClassName('certificado-content')[0].innerHTML
+            "));
+            $this->setResult($html_response, $cedula);
+            $browser->close();
         }catch (Node\Exception $exception) {
             $browser->close();
             $this->time += 1;
