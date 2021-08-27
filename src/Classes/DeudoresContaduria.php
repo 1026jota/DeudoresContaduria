@@ -36,7 +36,7 @@ class DeudoresContaduria
      * @param string $numero_cedula : identificacion a buscar
      * @return void
      */
-    public function searchByCedula(string $cedula, $time = 3): void
+    public function searchByCedula(string $cedula, $time = 2): void
     {
         try {
 
@@ -50,10 +50,7 @@ class DeudoresContaduria
                 ]
             ]);
             $page = $browser->newPage();
-            $page->setViewport([
-                'width' => 1080, 
-                'height' => 720,
-            ]);
+
             $page->goto('https://eris.contaduria.gov.co/BDME/');
 
             $page->waitForSelector('.gwt-Anchor');
@@ -86,7 +83,6 @@ class DeudoresContaduria
                     return document.getElementsByClassName('gwt-ListBox')[0].value = 3
                 "));
             }
-            $page->screenshot(['path' => '/var/www/html/kredicity-nuevo/example.png']);
             $page->click('.gwt-Button');
 
             $page->waitFor($time*1000);
@@ -98,7 +94,7 @@ class DeudoresContaduria
             $browser->close();
         }catch (Node\Exception $exception) {
             $browser->close();
-            $this->time += 1;
+            $this->time += 2;
             $this->searchByCedula($cedula, $this->time);
         }
     }
