@@ -2,10 +2,12 @@
 
 namespace Jota\DeudoresContaduria\Classes;
 
+use Exception;
 use Nesk\Puphpeteer\Puppeteer;
 use Nesk\Rialto\Data\JsFunction;
-use Nesk\Rialto\Exceptions\Node\FatalException;
 use Nesk\Rialto\Exceptions\Node;
+use Nesk\Rialto\Exceptions\Node\FatalException;
+
 class DeudoresContaduria
 {
     /**
@@ -13,6 +15,17 @@ class DeudoresContaduria
      * @var Puppeteer
      */
     private Puppeteer $puppeteer;
+
+    /**
+     * contiene el browser 
+     */
+    private $browser;
+
+    /**
+     * contiene la pagina donde
+     * se realiza la busqueda
+     */
+    private $page;
 
     /**
      * Resultado de la busqueda
@@ -26,7 +39,6 @@ class DeudoresContaduria
         $this->puppeteer = new Puppeteer([
             'executable_path' => config('contaduria.node'),
         ]);
-        $this->time = 3;
     }
 
     /**
@@ -34,68 +46,90 @@ class DeudoresContaduria
      * para saber si es un deudor moroso
      * @author alexander montaño
      * @param string $numero_cedula : identificacion a buscar
+     * @param int $retries : numero de intentos
      * @return void
      */
-    public function searchByCedula(string $cedula, $time = 2): void
+    public function searchByCedula(string $cedula, int $retries = 1): void
     {
+        if ($retries > 5) {
+            $this->browser->close();
+            throw new Exception('error tiempo de carga, la pagina no carga');
+        }
         try {
 
-            $browser = $this->puppeteer->launch([
-                'headless' => true,
+            if ($retries == 1) {
+                $this->browser = $this->puppeteer->launch([
+                    'headless' => true,
+                    // 'slowMo' => 80,
+                    'args' => [
+                        '--disable-gpu',
+                        '--disable-setuid-sandbox',
+                        '--no-sandbox',
+                    ]
+                ]);
+                $this->page = $this->browser->newPage();
+            }
 
-                'args' => [
-                    '--disable-gpu',
-                    '--disable-setuid-sandbox',
-                    '--no-sandbox',
-                ]
-            ]);
-            $page = $browser->newPage();
+            $this->page->tryCatch->goto('https://eris.contaduria.gov.co/BDME', ['waitUntil' => 'load', 'timeout' => 5000]);
+            $this->pageLoaded($cedula);
+        } catch (Node\Exception $exception) {
+            $this->searchByCedula($cedula, ($retries + 1));
+        }
+    }
 
-            $page->goto('https://eris.contaduria.gov.co/BDME/');
 
-            $page->waitForSelector('.gwt-Anchor');
-            $page->evaluate(JsFunction::createWithBody("
+    /**
+     * si la pagina esta cargada correctamente
+     * se ejecuta la busqueda
+     * @author alexander montaño
+     * @param string $cedula : cedula buscada
+     * @return void
+     */
+    private function pageLoaded(string $cedula) : void
+    {
+        try {
+            $this->page->waitFor(1000);
+            $this->page->evaluate(JsFunction::createWithBody("
                 return document.getElementsByClassName('gwt-Anchor')[0].click()
             "));
-            $page->waitFor(500);
+            $this->page->waitFor(1000);
 
-            $page->type('.gwt-TextBox', config('contaduria.user'));
-            $page->type('.gwt-PasswordTextBox', config('contaduria.password'));
-            $page->click('.gwt-Button');
-            $page->waitFor(1000);
+            $this->page->type('.gwt-TextBox', config('contaduria.user'));
+            $this->page->type('.gwt-PasswordTextBox', config('contaduria.password'));
+            $this->page->click('.gwt-Button');
+            $this->page->waitFor(1000);
 
-            $page->type('.gwt-TextBox', $cedula);
-            $page->click('.gwt-Button');
-            $page->waitFor(1000);
+            $this->page->type('.gwt-TextBox', $cedula);
+            $this->page->waitFor(500);
+            $this->page->click('.gwt-Button');
 
-
-            $page->evaluate(JsFunction::createWithBody("
+            $this->page->evaluate(JsFunction::createWithBody("
                 return document.getElementsByClassName('gwt-Button')[1].click()
             "));
-            $page->waitFor(2000);
+
+            $this->page->waitFor(1000);
 
             if ((int)$cedula === (int)config('contaduria.user')) {
-                $page->evaluate(JsFunction::createWithBody("
+                $this->page->evaluate(JsFunction::createWithBody("
                     return document.getElementsByClassName('gwt-ListBox')[0].value = 1
                 "));
             } else {
-                $page->evaluate(JsFunction::createWithBody("
+                $this->page->evaluate(JsFunction::createWithBody("
                     return document.getElementsByClassName('gwt-ListBox')[0].value = 3
                 "));
             }
-            $page->click('.gwt-Button');
 
-            $page->waitFor($time*1000);
+            $this->page->click('.gwt-Button');
 
-            $html_response = $page->tryCatch->evaluate(JsFunction::createWithBody("
+            $this->page->waitFor(8000);
+
+            $html_response = $this->page->tryCatch->evaluate(JsFunction::createWithBody("
                 return document.getElementsByClassName('certificado-content')[0].innerHTML
             "));
+            $this->browser->close();
             $this->setResult($html_response, $cedula);
-            $browser->close();
-        }catch (Node\Exception $exception) {
-            $browser->close();
-            $this->time += 2;
-            $this->searchByCedula($cedula, $this->time);
+        } catch (\Throwable $th) {
+            throw new Exception('error carga, la pagina no cargo todos los elementos');
         }
     }
 
@@ -114,6 +148,7 @@ class DeudoresContaduria
             $this->result['result'] = [
                 'response' => 'El documento de identificación número ' . $cedula . ' SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
             ];
+            $this->whereIsReporte($response);
         } else {
             $this->result['is_registered'] = false;
             $this->result['result'] = [
@@ -123,9 +158,63 @@ class DeudoresContaduria
     }
 
     /**
-     * Responde true si el numero de cedula se encuentra registrado
-     * como deudor en la BD de la contaduria
+     * toma el resultado y lo descompone para setear donde 
+     * se encuentra reportado el numero de cedula
      * @author alexander montaño
+     * @param string $response
+     * @return void
+     */
+    private function whereIsReporte(string $response) : void
+    {
+        $array_data = explode('<div style="outline-style:none;" __gwt_cell="cell-gwt-uid-', $response);
+        $flag = 0;
+        $count = 0;
+        foreach ($array_data as $key => $data) {
+            if ($key != 0) {
+                if ($key == 1) {
+                    $info = substr($data, 17);
+                    $info = explode('</div>', $info);
+                } else {
+                    $info = substr($data, 4);
+                    $info = explode('</div>', $info);
+                }
+                $this->addIfo($count, $flag, $info[0]);
+                $flag += 1;
+                if ($flag > 3) {
+                    $flag = 0;
+                    $count += 1;
+                }
+            }
+        }
+    }
+
+    /**
+     * Agrega la informacion de cada una de las deudas
+     * asociadas a el numero de cedula
+     * @author alexander montaño
+     * @param int $cont
+     * @param int $flag
+     * @param string $info
+     * @return bool
+     */
+    private function addIfo(int $count, int $flag, string $info) : void
+    {
+        if ($flag == 0) {
+            $this->result['info_' . $count]['nombre_reportado'] = $info;
+        } elseif ($flag == 1) {
+            $this->result['info_' . $count]['numero_obligacion'] = $info;
+        } elseif ($flag == 2) {
+            $this->result['info_' . $count]['estado'] = $info;
+        } elseif ($flag == 3) {
+            $this->result['info_' . $count]['fecha_corte'] = $info;
+        }
+    }
+
+    /**
+     * setea si el numero de cedula registra
+     * por lo menos una deuda
+     * @author alexander montaño
+     * @param string $response
      * @return bool
      */
     private function isDeudor(string $response): bool
