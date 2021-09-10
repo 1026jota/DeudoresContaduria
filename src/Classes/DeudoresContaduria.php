@@ -85,7 +85,7 @@ class DeudoresContaduria
      * @param string $cedula : cedula buscada
      * @return void
      */
-    private function pageLoaded(string $cedula) : void
+    private function pageLoaded(string $cedula): void
     {
         try {
             $this->page->waitFor(1000);
@@ -145,13 +145,13 @@ class DeudoresContaduria
     {
         if ($this->isDeudor($response)) {
             $this->result['is_registered'] = true;
-            $this->result['result'] = [
+            $this->result['response'] = [
                 'response' => 'El documento de identificación número ' . $cedula . ' SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
             ];
             $this->whereIsReporte($response);
         } else {
             $this->result['is_registered'] = false;
-            $this->result['result'] = [
+            $this->result['response'] = [
                 'response' => 'El documento de identificación número ' . $cedula . ' NO está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004.',
             ];
         }
@@ -164,7 +164,7 @@ class DeudoresContaduria
      * @param string $response
      * @return void
      */
-    private function whereIsReporte(string $response) : void
+    private function whereIsReporte(string $response): void
     {
         $array_data = explode('<div style="outline-style:none;" __gwt_cell="cell-gwt-uid-', $response);
         $flag = 0;
@@ -184,6 +184,10 @@ class DeudoresContaduria
                     $flag = 0;
                     $count += 1;
                 }
+            } else {
+                $info = explode('<div class="gwt-Label">:', $data);
+                $info = explode('</div>', $info[1]);
+                $this->result['entidad_reportante'] = $info[0];
             }
         }
     }
@@ -197,16 +201,16 @@ class DeudoresContaduria
      * @param string $info
      * @return bool
      */
-    private function addIfo(int $count, int $flag, string $info) : void
+    private function addIfo(int $count, int $flag, string $info): void
     {
         if ($flag == 0) {
-            $this->result['info_' . $count]['nombre_reportado'] = $info;
+            $this->result['info'][$count]['nombre_reportado'] = $info;
         } elseif ($flag == 1) {
-            $this->result['info_' . $count]['numero_obligacion'] = $info;
+            $this->result['info'][$count]['numero_obligacion'] = $info;
         } elseif ($flag == 2) {
-            $this->result['info_' . $count]['estado'] = $info;
+            $this->result['info'][$count]['estado'] = $info;
         } elseif ($flag == 3) {
-            $this->result['info_' . $count]['fecha_corte'] = $info;
+            $this->result['info'][$count]['fecha_corte'] = $info;
         }
     }
 
