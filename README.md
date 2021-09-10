@@ -24,9 +24,10 @@ php artisan vendor:publish --provider='Jota\DeudoresContaduria\Providers\Deudore
 _en el archivo config/contaduria.php se deben llenar los campos:_
 
 ```
-    //en bash ejecutar where is node y poner la ruta
+    //en bash ejecutar whereis node y poner la ruta
     'node' => '',
-    //para hacer uso debe crear un usuario en la contaduria
+
+    //para poder acceder debe crear un usuario en la contaduria
     'user' => '',
     'password' => ''
 ```
@@ -48,7 +49,7 @@ _en el archivo config/contaduria.php se deben llenar los campos:_
 cuando la cédula no está reportada
 [
   "is_registered" => false
-  "result" => array:1 [
+  "response" => array:1 [
     "response" => "El documento de identificación número XXXXXXXXX NO está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004."
   ]
 ]
@@ -56,9 +57,17 @@ cuando la cédula no está reportada
 cuando la cédula está arroja resultado
 [
   "is_registered" => true
-  "result" => array:1 [
-    "response" => "El documento de identificación número XXXXXXXXX SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004."
+  "response" => array:1 [
+    "response" => "El documento de identificación número XXXXXXX SI está incluido en el BDME que publica la CONTADURIA GENERAL DE LA NACIÓN, de acuerdo con lo establecido en el artículo 2° de la Ley 901 de 2004."
   ]
+  "entidad_reportante" => " XXXXXXXX XXXXX"
+  "info" => array:14 [
+    0 => array:4 [
+      "nombre_reportado" => "XXXXXX"
+      "numero_obligacion" => "XXXX"
+      "estado" => "Sin Leyenda"
+      "fecha_corte" => "2021/05/31"
+    ]
 ]
 
 ```
