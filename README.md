@@ -15,21 +15,27 @@ _para instalar el paquete ejecute el siguiente comando en consola:_
 composer require 1026jota/deudores-contaduria
 npm install @nesk/puphpeteer
 ```
-_después para publicar el archivo de configuración ejecuta siguiente comando:_
+_Después para publicar el archivo de configuración ejecuta siguiente comando:_
 
 ```
 php artisan vendor:publish --provider='Jota\DeudoresContaduria\Providers\DeudoresContaduriaProviders'
 ```
 
-_en el archivo config/contaduria.php se deben llenar los campos:_
+_En el archivo config/contaduria.php se deben llenar los campos:_
 
 ```
-    //en bash ejecutar whereis node y poner la ruta
+    //add the node path
     'node' => '',
 
-    //para poder acceder debe crear un usuario en la contaduria
+    //user and password of contaduria page
     'user' => '',
-    'password' => ''
+    'password' => '',
+
+    //proxies to use, you can use n proxies
+    'proxies' => [
+        ['ip' => 'xx.xx.xx.xx:xx', 'user' => 'xxxx', 'password' => 'xxxx'],
+        ['ip' => 'xx.xx.xx.xx:xx', 'user' => 'xxx', 'password' => 'xxxx'],
+    ]
 ```
 
 ## USO
