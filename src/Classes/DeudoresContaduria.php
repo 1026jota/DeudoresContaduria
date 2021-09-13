@@ -2,11 +2,10 @@
 
 namespace Jota\DeudoresContaduria\Classes;
 
-use Exception;
+use Jota\DeudoresContaduria\Exceptions\LoadTimeException;
 use Nesk\Puphpeteer\Puppeteer;
 use Nesk\Rialto\Data\JsFunction;
 use Nesk\Rialto\Exceptions\Node;
-use Nesk\Rialto\Exceptions\Node\FatalException;
 
 class DeudoresContaduria
 {
@@ -33,12 +32,33 @@ class DeudoresContaduria
      */
     private array $result;
 
+    /**
+     * Tendra el proxy seleccionado
+     * @var array
+     */
+    private array $proxy;
+
 
     public function __construct()
     {
         $this->puppeteer = new Puppeteer([
             'executable_path' => config('contaduria.node'),
         ]);
+        $this->selectProxy();
+    }
+
+    /**
+     * selecciona un proxy de manear aleatoria
+     * @author alexander montaño
+     * @return void
+     */
+    private function selectProxy() : void
+    {
+        $proxies = config('contaduria.proxies');
+        $rand = rand(0, count($proxies) - 1);
+        $this->proxy['ip'] = $proxies[$rand]['ip'];
+        $this->proxy['user'] = $proxies[$rand]['user'];
+        $this->proxy['password'] = $proxies[$rand]['password'];
     }
 
     /**
@@ -51,28 +71,34 @@ class DeudoresContaduria
      */
     public function searchByCedula(string $cedula, int $retries = 1): void
     {
-        if ($retries > 5) {
+        if ($retries > 4) {
             $this->browser->close();
-            throw new Exception('error tiempo de carga, la pagina no carga');
+            throw new LoadTimeException('error tiempo de carga, la pagina no carga', ['cedula' => $cedula, 'proxy' => $this->proxy]);
         }
         try {
-
             if ($retries == 1) {
+
                 $this->browser = $this->puppeteer->launch([
                     'headless' => true,
-                    // 'slowMo' => 80,
+                    'slowMo' => 10,
                     'args' => [
+                        '--proxy-server='.$this->proxy['ip'],
                         '--disable-gpu',
                         '--disable-setuid-sandbox',
                         '--no-sandbox',
                     ]
                 ]);
                 $this->page = $this->browser->newPage();
+                $this->page->authenticate([
+                    'username' =>  $this->proxy['user'],
+                    'password' => $this->proxy['password']
+                ]);
             }
 
-            $this->page->tryCatch->goto('https://eris.contaduria.gov.co/BDME', ['waitUntil' => 'load', 'timeout' => 5000]);
+            $this->page->tryCatch->goto('https://eris.contaduria.gov.co/BDME', ['waitUntil' => 'load', 'timeout' => 7000]);
+            $this->page->screenshot(['path' => '/var/www/html/kredicity-nuevo/example.png']);
             $this->pageLoaded($cedula);
-        } catch (Node\Exception $exception) {
+        } catch (Node\Exception $e) {
             $this->searchByCedula($cedula, ($retries + 1));
         }
     }
@@ -121,7 +147,7 @@ class DeudoresContaduria
 
             $this->page->click('.gwt-Button');
 
-            $this->page->waitFor(8000);
+            $this->page->waitFor(7000);
 
             $html_response = $this->page->tryCatch->evaluate(JsFunction::createWithBody("
                 return document.getElementsByClassName('certificado-content')[0].innerHTML
@@ -129,7 +155,7 @@ class DeudoresContaduria
             $this->browser->close();
             $this->setResult($html_response, $cedula);
         } catch (\Throwable $th) {
-            throw new Exception('error carga, la pagina no cargo todos los elementos');
+            throw new LoadTimeException('error carga, la pagina no cargo todos los elementos',['cedula' => $cedula]);
         }
     }
 
