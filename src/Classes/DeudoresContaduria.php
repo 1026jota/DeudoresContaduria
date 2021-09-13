@@ -96,7 +96,7 @@ class DeudoresContaduria
             }
 
             $this->page->tryCatch->goto('https://eris.contaduria.gov.co/BDME', ['waitUntil' => 'load', 'timeout' => 7000]);
-            $this->page->screenshot(['path' => 'example.png']);
+            //$this->page->screenshot(['path' => 'example.png']);
             $this->pageLoaded($cedula);
         } catch (Node\Exception $e) {
             $this->searchByCedula($cedula, ($retries + 1));
