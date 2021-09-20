@@ -33,33 +33,21 @@ class DeudoresContaduria
     private array $result;
 
     /**
-     * Tendra el proxy seleccionado
+     * Resultado de la busqueda
      * @var array
      */
-    private array $proxy;
+    private ?array $proxy;
 
 
-    public function __construct()
+    public function __construct(?array $proxy = null)
     {
         $this->puppeteer = new Puppeteer([
             'executable_path' => config('contaduria.node'),
         ]);
-        $this->selectProxy();
+
+        $this->proxy = $proxy;
     }
 
-    /**
-     * selecciona un proxy de manear aleatoria
-     * @author alexander montaño
-     * @return void
-     */
-    private function selectProxy() : void
-    {
-        $proxies = config('contaduria.proxies');
-        $rand = rand(0, count($proxies) - 1);
-        $this->proxy['ip'] = $proxies[$rand]['ip'];
-        $this->proxy['user'] = $proxies[$rand]['user'];
-        $this->proxy['password'] = $proxies[$rand]['password'];
-    }
 
     /**
      * Busca en la pagina de la contaduria un numero de cedula(Colombiana)
@@ -75,31 +63,55 @@ class DeudoresContaduria
             $this->browser->close();
             throw new LoadTimeException('error tiempo de carga, la pagina no carga', ['cedula' => $cedula, 'proxy' => $this->proxy]);
         }
-        try {
-            if ($retries == 1) {
 
-                $this->browser = $this->puppeteer->launch([
-                    'headless' => true,
-                    'slowMo' => 10,
-                    'args' => [
-                        '--proxy-server='.$this->proxy['ip'],
-                        '--disable-gpu',
-                        '--disable-setuid-sandbox',
-                        '--no-sandbox',
-                    ]
-                ]);
-                $this->page = $this->browser->newPage();
-                $this->page->authenticate([
-                    'username' =>  $this->proxy['user'],
-                    'password' => $this->proxy['password']
-                ]);
-            }
+        try {
+
+            if ($retries == 1)
+                $this->loadBrowser();
 
             $this->page->tryCatch->goto('https://eris.contaduria.gov.co/BDME', ['waitUntil' => 'load', 'timeout' => 7000]);
-            //$this->page->screenshot(['path' => 'example.png']);
+            $this->page->screenshot(['path' => '/var/www/html/kredicity-nuevo/example.png']);
             $this->pageLoaded($cedula);
         } catch (Node\Exception $e) {
             $this->searchByCedula($cedula, ($retries + 1));
+        }
+    }
+
+    /**
+     * carga el browser segun se envie proxy o no
+     * @author alexander montaño
+     * @return void
+     */
+    private function loadBrowser(): void
+    {
+        if (!is_null($this->proxy)) {
+            $this->browser = $this->puppeteer->launch([
+                'headless' => false,
+                'slowMo' => 50,
+                'args' => [
+                    '--proxy-server=' . $this->proxy['ip'] . ':' . $this->proxy['port'],
+                    '--disable-gpu',
+                    '--disable-setuid-sandbox',
+                    '--no-sandbox',
+                ]
+            ]);
+            $this->page = $this->browser->newPage();
+            $this->page->authenticate([
+                'username' =>  $this->proxy['user'],
+                'password' => $this->proxy['password']
+            ]);
+        } else {
+
+            $this->browser = $this->puppeteer->launch([
+                'headless' => false,
+                'slowMo' => 10,
+                'args' => [
+                    '--disable-gpu',
+                    '--disable-setuid-sandbox',
+                    '--no-sandbox',
+                ]
+            ]);
+            $this->page = $this->browser->newPage();
         }
     }
 
@@ -118,7 +130,7 @@ class DeudoresContaduria
             $this->page->evaluate(JsFunction::createWithBody("
                 return document.getElementsByClassName('gwt-Anchor')[0].click()
             "));
-            $this->page->waitFor(1000);
+            $this->page->waitFor(2000);
 
             $this->page->type('.gwt-TextBox', config('contaduria.user'));
             $this->page->type('.gwt-PasswordTextBox', config('contaduria.password'));
@@ -155,7 +167,7 @@ class DeudoresContaduria
             $this->browser->close();
             $this->setResult($html_response, $cedula);
         } catch (\Throwable $th) {
-            throw new LoadTimeException('error carga, la pagina no cargo todos los elementos',['cedula' => $cedula]);
+            throw new LoadTimeException('error carga, la pagina no cargo todos los elementos', ['cedula' => $cedula]);
         }
     }
 
