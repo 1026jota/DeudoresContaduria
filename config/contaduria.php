@@ -8,9 +8,4 @@ return [
     'user' => '',
     'password' => '',
 
-    //proxies to use 
-    'proxies' => [
-        ['ip' => 'xx.xx.xx.xx:xx', 'user' => 'xxxx', 'password' => 'xxxx'],
-        ['ip' => 'xx.xx.xx.xx:xx', 'user' => 'xxx', 'password' => 'xxxx'],
-    ]
 ];
