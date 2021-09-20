@@ -86,8 +86,7 @@ class DeudoresContaduria
     {
         if (!is_null($this->proxy)) {
             $this->browser = $this->puppeteer->launch([
-                'headless' => false,
-                'slowMo' => 50,
+                'headless' => true,
                 'args' => [
                     '--proxy-server=' . $this->proxy['ip'] . ':' . $this->proxy['port'],
                     '--disable-gpu',
@@ -103,8 +102,7 @@ class DeudoresContaduria
         } else {
 
             $this->browser = $this->puppeteer->launch([
-                'headless' => false,
-                'slowMo' => 10,
+                'headless' => true,
                 'args' => [
                     '--disable-gpu',
                     '--disable-setuid-sandbox',
