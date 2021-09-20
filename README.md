@@ -24,20 +24,27 @@ php artisan vendor:publish --provider='Jota\DeudoresContaduria\Providers\Deudore
 _En el archivo config/contaduria.php se deben llenar los campos:_
 
 ```
-    //add the node path
-    'node' => '',
+  //add the node path
+  'node' => '',
 
-    //user and password of contaduria page
-    'user' => '',
-    'password' => '',
+  //user and password of contaduria page
+  'user' => '',
+  'password' => '',
 
-    //proxies to use, you can use n proxies
-    'proxies' => [
-        ['ip' => 'xx.xx.xx.xx:xx', 'user' => 'xxxx', 'password' => 'xxxx'],
-        ['ip' => 'xx.xx.xx.xx:xx', 'user' => 'xxx', 'password' => 'xxxx'],
-    ]
 ```
+## USO DE PROXIES
 
+_Para hacer usos de proxies debe pasar por el contsructor un array con la siguiente estructura_
+```
+  $proxy['ip'] = 'xxxx.xxxx.xxxx.xxxx';
+  $proxy['port'] = 'xxxx';
+  $proxy['user'] = 'xxxxxx';
+  $proxy['password'] = 'xxxxxxx';
+
+  $contaduria = new DeudoresContaduria($proxy);
+
+```
+_Si no se pasa argumento al constructor la peticion se hara desde la ip priginal del usuario_
 ## USO
 
 ```
